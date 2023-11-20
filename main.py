@@ -12,3 +12,10 @@ driver = webdriver.Chrome(service=service)
 
 URL = 'https://www.mgs.srv.br/empregados-por-nomes'
 driver.get(URL)
+
+def wait_to_load(value, element=True):
+    while True:
+        if element and driver.find_element(By.XPATH, value):
+            return driver.find_element(By.XPATH, value)
+        elif not element and driver.find_elements(By.XPATH, value):
+            return driver.find_elements(By.XPATH, value)
