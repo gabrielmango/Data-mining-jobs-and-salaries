@@ -1,5 +1,6 @@
 import os
 import time
+import pandas as pd
 from pprint import pprint
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -40,9 +41,9 @@ def display_progress(current_value, maximum_value, mensage, bar_length=20):
         
            
 # Set ‘page results’ to 100
-pagination = wait_to_load_element('//*[@id="datatable_length"]/label/select')
-select = Select(pagination)
-select.select_by_value('100')
+# pagination = wait_to_load_element('//*[@id="datatable_length"]/label/select')
+# select = Select(pagination)
+# select.select_by_value('100')
 
 cookie_consent = driver.find_element(By.ID, 'cookieConsent')
 driver.execute_script("arguments[0].style.display='none';", cookie_consent)
@@ -53,41 +54,46 @@ last_page_number = int(wait_to_load_element('//*[@id="datatable_paginate"]/ul/li
 info = {}
 
 # Make pagination
-for index in range(2, last_page_number + 1):
+group_rows = wait_to_load_element('//*[@id="datatable"]/tbody', 'xpath')
+rows = group_rows.find_elements(By.TAG_NAME, 'tr')
 
-    display_progress(index, last_page_number + 1, 'Getting links of information:')
+links = []
 
-    group_rows = wait_to_load_element('//*[@id="datatable"]/tbody', 'xpath')
-    rows = group_rows.find_elements(By.TAG_NAME, 'tr')
+for row in rows:
+    links.append(row.find_element(By.TAG_NAME, 'a').get_attribute('href'))
 
-    links = []
+driver.execute_script("window.open('');")
+driver.switch_to.window(driver.window_handles[1])
 
-    for row in rows:
-        links.append(row.find_element(By.TAG_NAME, 'a').get_attribute('href'))
+for index, link in enumerate(links):
+    driver.get(link)
 
-    driver.execute_script("window.open('');")
-    driver.switch_to.window(driver.window_handles[1])
-    
-    for link in links:
-        driver.get(link)
+    job_description = wait_to_load_element('//*[@id="info"]/div/ul/li[7]', 'xpath').text
+    job = job_description.replace('Cargo: ', '').lower()
 
-        job_description = wait_to_load_element('//*[@id="info"]/div/ul/li[7]', 'xpath').text
-        job = job_description.replace('Cargo: ', '').lower()
+    salary_description = wait_to_load_element('//*[@id="info"]/div/ul/li[17]', 'xpath').text
+    salary = salary_description.replace('Remuneração Básica Bruta: ', '').replace('.', '').replace(',', '.').replace('R$', '').replace(' ', '')
 
-        salary_description = wait_to_load_element('//*[@id="info"]/div/ul/li[17]', 'xpath').text
-        salary = salary_description.replace('Remuneração Básica Bruta: ', '').replace('.', '').replace(',', '.').replace('R$', '').replace(' ', '')
-
-        if '-' not in salary:
-            info.setdefault(job, []).append(float(salary))
-
+    if '-' not in salary:
         info.setdefault(job, []).append(float(salary))
 
-    driver.close()
+    print(index)
+    pprint(info)
+    print()
 
-    _paginations = wait_to_load_element('pagination', 'class')
-    pages = _paginations.find_elements(By.TAG_NAME, 'a')
-    for page in pages:
-        if page.text == str(index):
-            page.click()
-            time.sleep(1)
-            break
+average_salary = {}
+
+for job, salary in info.items():
+    average = sum(salary) / len(salary)
+    average_salary[job] = average
+
+# Criar uma lista de dicionários para cada linha do DataFrame
+dados = [{'Cargo': cargo, 'Média Salarial': media} for cargo, media in average_salary.items()]
+
+# Criar o DataFrame a partir da lista de dicionários
+df = pd.DataFrame(dados)
+
+# Salvar o DataFrame em um arquivo Excel
+df.to_excel('medias_salariais.xlsx', index=False)
+
+
