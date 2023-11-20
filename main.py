@@ -1,7 +1,7 @@
+import os
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
@@ -28,6 +28,15 @@ def wait_to_load_element(value, type='xpath', timeout=1):
         elif type == 'tag' and driver.find_element(By.TAG_NAME, value):
             return driver.find_element(By.TAG_NAME, value)
         
+def display_progress(current_value, maximum_value, mensage, bar_length=20):
+    completion_percentage = (current_value / maximum_value) * 100
+    filled_characters = int(bar_length * (current_value / maximum_value))
+    progress_bar = '[' + '#' * filled_characters + '-' * (bar_length - filled_characters) + ']'
+    progress_message = f'{progress_bar} {completion_percentage:.2f}% Complete'
+    os.system('cls')
+    print(mensage)
+    print(progress_message)
+        
            
 # Set ‘page results’ to 100
 pagination = wait_to_load_element('//*[@id="datatable_length"]/label/select')
@@ -42,6 +51,8 @@ list_of_informations = []
 # Make pagination
 for index in range(2, last_page_number + 1):
 
+    display_progress(index, last_page_number + 1, 'Getting links of information:')
+
     group_rows = wait_to_load_element('//*[@id="datatable"]/tbody', 'xpath')
     rows = group_rows.find_elements(By.TAG_NAME, 'tr')
 
@@ -49,7 +60,7 @@ for index in range(2, last_page_number + 1):
         list_of_informations.append(row.find_element(By.TAG_NAME, 'a').get_attribute('href'))
 
 
-    _paginations = wait_to_load_element('pagination', 'class', 2)
+    _paginations = wait_to_load_element('pagination', 'class')
     pages = _paginations.find_elements(By.TAG_NAME, 'a')
     for page in pages:
         if page.text == str(index):
