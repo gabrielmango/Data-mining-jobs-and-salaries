@@ -1,6 +1,6 @@
 import os
 import time
-from pprint import pprint
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 service = ChromeService(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
 options.add_argument('--headless=new')
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(service=service, options=options)
 
 
 URL = 'https://www.mgs.srv.br/empregados-por-nomes'
@@ -80,9 +80,8 @@ for index in range(2, last_page_number + 1):
         if '-' not in salary:
             info.setdefault(job, []).append(float(salary))
 
-        info.setdefault(job, []).append(float(salary))
-
     driver.close()
+    driver.switch_to.window(driver.window_handles[0])
 
     _paginations = wait_to_load_element('pagination', 'class')
     pages = _paginations.find_elements(By.TAG_NAME, 'a')
@@ -91,3 +90,15 @@ for index in range(2, last_page_number + 1):
             page.click()
             time.sleep(1)
             break
+
+average_salary = {}
+
+for job, salary in info.items():
+    average = sum(salary) / len(salary)
+    average_salary[job] = average
+
+data = [{'Position': job, 'Average Salary': average} for job, average in average_salary.items()]
+
+df = pd.DataFrame(data)
+
+df.to_excel('salary_averages.xlsx', index=False)
