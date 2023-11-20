@@ -27,18 +27,7 @@ def wait_to_load_element(value, type='xpath'):
         elif type == 'tag' and driver.find_element(By.TAG_NAME, value):
             return driver.find_element(By.TAG_NAME, value)
         
-
-def wait_to_load_elements(value, type='xpath'):
-    while True:
-        time.sleep(1)
-        if type == 'xpath' and driver.find_elements(By.XPATH, value):
-            return driver.find_elements(By.XPATH, value)
-        elif type == 'class' and driver.find_elements(By.CLASS_NAME, value):
-            return driver.find_elements(By.CLASS_NAME, value)
-        elif type == 'tag' and driver.find_elements(By.TAG_NAME, value):
-            return driver.find_elements(By.TAG_NAME, value)
-
-               
+           
 # Set ‘page results’ to 100
 pagination = wait_to_load_element('//*[@id="datatable_length"]/label/select')
 select = Select(pagination)
